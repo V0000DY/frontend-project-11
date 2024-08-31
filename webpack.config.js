@@ -2,8 +2,10 @@
 
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 const isProduction = process.env.NODE_ENV === 'production';
+const stylesHandler = isProduction ? MiniCssExtractPlugin.loader : 'style-loader';
 
 const config = {
   entry: './src/index.js',
@@ -21,7 +23,7 @@ const config = {
 
     // Add your plugins here
     // Learn more about plugins from https://webpack.js.org/configuration/plugins/
-  ],
+  ].concat(isProduction ? [new MiniCssExtractPlugin()] : []),
   module: {
     rules: [
       {
@@ -33,12 +35,8 @@ const config = {
         type: 'asset',
       },
       {
-        test: /\.css$/i,
-        use: ['style-loader', 'css-loader', 'postcss-loader'],
-      },
-      {
-        test: /\.scss$/i,
-        use: ['style-loader', 'css-loader', 'sass-loader', 'postcss-loader'],
+        test: /\.(sa|sc|c)ss$/i,
+        use: [stylesHandler, 'css-loader', 'postcss-loader', 'sass-loader'],
       },
 
       // Add your rules for custom modules here
