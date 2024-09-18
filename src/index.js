@@ -1,41 +1,67 @@
 import './style.scss';
 import 'bootstrap';
+import i18next from 'i18next';
 import * as yup from 'yup';
-import render from './view.js';
+import resources from './locales/index.js';
+import watch from './view.js';
+
+const elements = {
+  mainContainer: document.querySelector('.text-white'),
+  form: null,
+  urlInput: null,
+  errorField: null,
+};
+
+const defaultLang = 'ru';
 
 const state = {
   feeds: [],
   form: {
-    error: '',
+    status: null,
+    // valid: false,
+    errors: '',
   },
 };
 
-const elements = {
-  form: document.querySelector('.rss-form'),
-  input: document.getElementById('url-input'),
-  paragraph: document.querySelector('.feedback'),
-};
+yup.setLocale({
+  mixed: {
+    notOneOf: () => ({ key: 'errors.validation.notOneOf' }),
+  },
+  string: {
+    url: () => ({ key: 'errors.validation.url' }),
+  },
+});
 
-const watchedState = render(state, elements);
+const i18n = i18next.createInstance();
+await i18n.init({
+  lng: defaultLang,
+  debug: false,
+  resources,
+});
+
+const watchedState = watch(elements, i18n, state);
+watchedState.form.status = 'filling';
 
 elements.form.addEventListener('submit', (e) => {
   e.preventDefault();
 
-  const formData = new FormData(e.target);
-
   const schema = yup.object({
-    inputValue: yup
+    url: yup
       .string()
-      .url('Ссылка должна быть валидным URL')
-      .notOneOf(watchedState.feeds, 'RSS уже существует'),
+      .url()
+      .notOneOf(watchedState.feeds),
   });
 
+  const formData = new FormData(e.target);
+
   schema
-    .validate({ inputValue: formData.get('url') })
-    .then(({ inputValue }) => {
-      watchedState.feeds = [...watchedState.feeds, inputValue];
+    .validate(Object.fromEntries(formData))
+    .then(({ url }) => {
+      watchedState.feeds = [...watchedState.feeds, url];
+      watchedState.form.errors = '';
     })
     .catch((error) => {
-      watchedState.form.error = error;
+      const { message } = error;
+      watchedState.form.errors = message;
     });
 });
