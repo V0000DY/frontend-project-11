@@ -13,6 +13,7 @@ const watch = (elements, i18n, state) => {
     feedback,
     posts,
     feeds,
+    modal,
   } = elements;
 
   const renderTexts = () => {
@@ -70,17 +71,42 @@ const watch = (elements, i18n, state) => {
     feeds.append(card);
   };
 
+  const renderModal = () => {
+    const {
+      header,
+      body,
+      viewBtn,
+    } = modal;
+    const {
+      title,
+      description,
+      link,
+    } = state.ui.modal;
+    header.textContent = title;
+    body.textContent = description;
+    viewBtn.href = link;
+  };
+
   const renderPosts = () => {
     const card = createCard(i18n.t('postsTitle'));
 
     state.posts.forEach((post) => {
-      const { title, link, id } = post;
+      const {
+        title,
+        link,
+        id,
+      } = post;
       const li = document.createElement('li');
       const postAnchor = document.createElement('a');
       const viewButton = document.createElement('button');
 
       li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
-      postAnchor.classList.add('fw-bold');
+      if (state.viewedPosts.includes(id)) {
+        postAnchor.classList.add('fw-normal');
+        postAnchor.classList.add('link-secondary');
+      } else {
+        postAnchor.classList.add('fw-bold');
+      }
       viewButton.classList.add('btn', 'btn-outline-primary', 'btn-sm');
 
       postAnchor.href = link;
@@ -93,6 +119,15 @@ const watch = (elements, i18n, state) => {
 
       postAnchor.textContent = title;
       viewButton.textContent = i18n.t('viewButton');
+
+      // eslint-disable-next-line no-use-before-define
+      postAnchor.addEventListener('click', () => markViewedPost(post.id));
+      viewButton.addEventListener('click', () => {
+        // eslint-disable-next-line no-use-before-define
+        markViewedPost(post.id);
+        // eslint-disable-next-line no-use-before-define
+        markModalPost(post);
+      });
 
       li.append(postAnchor);
       li.append(viewButton);
@@ -154,6 +189,12 @@ const watch = (elements, i18n, state) => {
       case 'posts':
         renderPosts();
         break;
+      case 'viewedPosts':
+        renderPosts();
+        break;
+      case 'ui.modal':
+        renderModal();
+        break;
         // case 'form.valid':
       //   clearErrors();
       //   break;
@@ -161,6 +202,14 @@ const watch = (elements, i18n, state) => {
         break;
     }
   });
+
+  function markViewedPost(postId) {
+    watchedState.viewedPosts.push(postId);
+  }
+
+  function markModalPost(post) {
+    watchedState.ui.modal = post;
+  }
 
   return watchedState;
 };

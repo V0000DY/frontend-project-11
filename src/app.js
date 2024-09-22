@@ -13,11 +13,16 @@ export default async () => {
     form: document.querySelector('.rss-form'),
     input: document.getElementById('url-input'),
     label: document.querySelector('label'),
-    button: document.querySelector('button'),
+    button: document.querySelector('.col-auto > button'),
     example: document.querySelector('.text-muted'),
     feedback: document.querySelector('.feedback'),
     posts: document.querySelector('.posts'),
     feeds: document.querySelector('.feeds'),
+    modal: {
+      header: document.querySelector('.modal-header > h5'),
+      body: document.querySelector('.modal-body'),
+      viewBtn: document.querySelector('.modal-footer > a'),
+    },
   };
 
   const defaultLang = 'ru';
@@ -25,7 +30,7 @@ export default async () => {
   const state = {
     feeds: [],
     posts: [],
-    viewedPosts: null,
+    viewedPosts: [],
     form: {
       status: null,
       // valid: false,
@@ -36,7 +41,9 @@ export default async () => {
       errors: '',
     },
     parsingError: '',
-    ui: {},
+    ui: {
+      modal: null,
+    },
   };
 
   yup.setLocale({
@@ -72,8 +79,11 @@ export default async () => {
       .catch((error) => error.message);
   };
 
-  const loadRSS = (RSSlink) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(RSSlink)}`)
-    .then(({ data }) => data)
+  const loadRSS = (RSSlink) => axios({
+    method: 'get',
+    url: `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(RSSlink)}`,
+    timeout: 10000,
+  }).then(({ data }) => data)
     .catch((error) => {
       watchedState.loadingProcess.status = 'fail';
       watchedState.loadingProcess.errors = error;
@@ -114,7 +124,6 @@ export default async () => {
       const oldPostsLinks = oldPosts.map((oldPost) => oldPost.link);
       const newPosts = posts.filter((post) => !oldPostsLinks.includes(post.link));
       if (newPosts.length === 0) {
-        console.log('newPosts.length === 0');
         return;
       }
       watchedState.posts = [...newPosts, ...watchedState.posts];
