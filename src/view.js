@@ -148,11 +148,13 @@ const watch = (elements, i18n, state) => {
       case 'feeds':
         clearErrors();
         renderFeeds();
-        renderPosts();
         renderSuccess();
         updateInput();
         break;
-      // case 'form.valid':
+      case 'posts':
+        renderPosts();
+        break;
+        // case 'form.valid':
       //   clearErrors();
       //   break;
       default:

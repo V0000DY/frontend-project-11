@@ -73,16 +73,7 @@ export default async () => {
   };
 
   const loadRSS = (RSSlink) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(RSSlink)}`)
-    .then(({ data }) => {
-      const { feed, posts, error } = parser(data);
-      if (error) {
-        watchedState.parsingError = error;
-        return;
-      }
-      // watchedState.parsingError = '';
-      watchedState.posts = [...posts, ...watchedState.posts];
-      watchedState.feeds = [feed, ...watchedState.feeds];
-    })
+    .then(({ data }) => data)
     .catch((error) => {
       watchedState.loadingProcess.status = 'fail';
       watchedState.loadingProcess.errors = error;
@@ -100,8 +91,42 @@ export default async () => {
           watchedState.form.errors = error;
           return;
         }
-        loadRSS(url);
+
+        loadRSS(url).then((data) => {
+          const { feed, posts, parsingError } = parser(data);
+          if (error) {
+            watchedState.parsingError = parsingError;
+            return;
+          }
+          // watchedState.parsingError = '';
+          watchedState.posts = [...posts, ...watchedState.posts];
+          watchedState.feeds = [feed, ...watchedState.feeds];
+        });
+
         watchedState.form.errors = '';
       });
   });
+
+  const checkFeed = (feed) => {
+    loadRSS(feed.url).then((data) => {
+      const { posts } = parser(data, feed.id);
+      const oldPosts = state.posts.filter((post) => post.feedId === feed.id);
+      const oldPostsLinks = oldPosts.map((oldPost) => oldPost.link);
+      const newPosts = posts.filter((post) => !oldPostsLinks.includes(post.link));
+      if (newPosts.length === 0) {
+        console.log('newPosts.length === 0');
+        return;
+      }
+      watchedState.posts = [...newPosts, ...watchedState.posts];
+    });
+  };
+
+  const delay = 5000;
+
+  const updatePosts = () => {
+    state.feeds.forEach((feed) => checkFeed(feed));
+    setTimeout(updatePosts, delay);
+  };
+
+  setTimeout(updatePosts, delay);
 };

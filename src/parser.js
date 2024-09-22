@@ -1,14 +1,14 @@
 import _ from 'lodash';
 
-export default ({ contents, status }) => {
+export default ({ contents, status }, feedId = _.uniqueId('feed_')) => {
   const parser = new DOMParser();
   const parsedData = parser.parseFromString(contents, 'text/xml');
   if (parsedData.querySelector('parsererror')) {
-    return { error: parsedData.querySelector('parsererror > div').textContent };
+    return { parsingError: parsedData.querySelector('parsererror > div').textContent };
   }
   const feed = {
     url: status.url,
-    id: _.uniqueId('feed_'),
+    id: feedId,
     title: parsedData.querySelector('channel > title').textContent,
     description: parsedData.querySelector('channel > description').textContent,
   };
