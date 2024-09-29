@@ -101,7 +101,7 @@ const watch = (elements, i18n, state) => {
       const viewButton = document.createElement('button');
 
       li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
-      if (state.viewedPosts.includes(id)) {
+      if (state.ui.viewedPosts.includes(id)) {
         postAnchor.classList.add('fw-normal');
         postAnchor.classList.add('link-secondary');
       } else {
@@ -155,6 +155,7 @@ const watch = (elements, i18n, state) => {
   };
 
   const clearErrors = () => {
+    input.classList.remove('is-invalid');
     feedback.textContent = '';
   };
 
@@ -163,7 +164,7 @@ const watch = (elements, i18n, state) => {
     input.focus();
   };
 
-  const watchedState = onChange(state, (path) => {
+  const watchedState = onChange(state, (path, value) => {
     switch (path) {
       case 'form.status':
         renderTexts();
@@ -175,6 +176,16 @@ const watch = (elements, i18n, state) => {
       case 'form.errors':
         clearErrors();
         renderError(i18n.t(state.form.errors.key));
+        break;
+      case 'loadingProcess.status':
+        if (value === 'loading') {
+          button.disabled = true;
+        } else {
+          button.disabled = false;
+        }
+        if (value === 'success') {
+          clearErrors();
+        }
         break;
       case 'loadingProcess.errors':
         clearErrors();
@@ -189,22 +200,19 @@ const watch = (elements, i18n, state) => {
       case 'posts':
         renderPosts();
         break;
-      case 'viewedPosts':
+      case 'ui.viewedPosts':
         renderPosts();
         break;
       case 'ui.modal':
         renderModal();
         break;
-        // case 'form.valid':
-      //   clearErrors();
-      //   break;
       default:
         break;
     }
   });
 
   function markViewedPost(postId) {
-    watchedState.viewedPosts.push(postId);
+    watchedState.ui.viewedPosts.push(postId);
   }
 
   function markModalPost(post) {

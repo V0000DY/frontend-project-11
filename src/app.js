@@ -1,6 +1,7 @@
 import i18next from 'i18next';
 import axios from 'axios';
 import * as yup from 'yup';
+import _ from 'lodash';
 import resources from './locales/index.js';
 import watch from './view.js';
 import parser from './parser';
@@ -30,18 +31,18 @@ export default async () => {
   const state = {
     feeds: [],
     posts: [],
-    viewedPosts: [],
     form: {
       status: null,
-      // valid: false,
       errors: '',
     },
     loadingProcess: {
-      status: null,
+      data: {},
+      status: 'idle',
       errors: '',
     },
     parsingError: '',
     ui: {
+      viewedPosts: [],
       modal: null,
     },
   };
@@ -83,11 +84,13 @@ export default async () => {
     method: 'get',
     url: `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(RSSlink)}`,
     timeout: 10000,
-  }).then(({ data }) => data)
-    .catch((error) => {
-      watchedState.loadingProcess.status = 'fail';
-      watchedState.loadingProcess.errors = error;
-    });
+  }).then(({ data }) => {
+    watchedState.loadingProcess.status = 'success';
+    return data;
+  }).catch((error) => {
+    watchedState.loadingProcess.status = 'fail';
+    watchedState.loadingProcess.errors = error;
+  });
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -102,15 +105,24 @@ export default async () => {
           return;
         }
 
+        watchedState.loadingProcess.status = 'loading';
+
         loadRSS(url).then((data) => {
+          if (!data) return;
           const { feed, posts, parsingError } = parser(data);
-          if (error) {
+          if (parsingError) {
             watchedState.parsingError = parsingError;
             return;
           }
-          // watchedState.parsingError = '';
-          watchedState.posts = [...posts, ...watchedState.posts];
+          feed.id = _.uniqueId('feed_');
+          const relatedPosts = posts.map((post) => ({
+            id: _.uniqueId('post_'),
+            feedId: feed.id,
+            ...post,
+          }));
+          watchedState.posts = [...relatedPosts, ...watchedState.posts];
           watchedState.feeds = [feed, ...watchedState.feeds];
+          watchedState.loadingProcess.status = 'success';
         });
 
         watchedState.form.errors = '';
@@ -119,14 +131,20 @@ export default async () => {
 
   const checkFeed = (feed) => {
     loadRSS(feed.url).then((data) => {
-      const { posts } = parser(data, feed.id);
+      if (!data) return;
+      const { posts } = parser(data);
       const oldPosts = state.posts.filter((post) => post.feedId === feed.id);
       const oldPostsLinks = oldPosts.map((oldPost) => oldPost.link);
       const newPosts = posts.filter((post) => !oldPostsLinks.includes(post.link));
       if (newPosts.length === 0) {
         return;
       }
-      watchedState.posts = [...newPosts, ...watchedState.posts];
+      const relatedPosts = newPosts.map((post) => ({
+        id: _.uniqueId('post_'),
+        feedId: feed.id,
+        ...post,
+      }));
+      watchedState.posts = [...relatedPosts, ...watchedState.posts];
     });
   };
 

@@ -1,6 +1,4 @@
-import _ from 'lodash';
-
-export default ({ contents, status }, feedId = _.uniqueId('feed_')) => {
+export default ({ contents, status }) => {
   const parser = new DOMParser();
   const parsedData = parser.parseFromString(contents, 'text/xml');
   if (parsedData.querySelector('parsererror')) {
@@ -8,7 +6,6 @@ export default ({ contents, status }, feedId = _.uniqueId('feed_')) => {
   }
   const feed = {
     url: status.url,
-    id: feedId,
     title: parsedData.querySelector('channel > title').textContent,
     description: parsedData.querySelector('channel > description').textContent,
   };
@@ -19,8 +16,6 @@ export default ({ contents, status }, feedId = _.uniqueId('feed_')) => {
     const description = item.querySelector('description');
     const link = item.querySelector('link');
     const post = {
-      id: _.uniqueId('post_'),
-      feedId: feed.id,
       title: title.textContent,
       description: description.textContent,
       link: link.textContent,
