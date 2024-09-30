@@ -4,7 +4,7 @@ import * as yup from 'yup';
 import _ from 'lodash';
 import resources from './locales/index.js';
 import watch from './view.js';
-import parser from './parser';
+import parser from './parser.js';
 
 export default async () => {
   const elements = {
