@@ -1,11 +1,10 @@
-export default ({ contents, status }) => {
+export default ({ contents }) => {
   const parser = new DOMParser();
   const parsedData = parser.parseFromString(contents, 'text/xml');
   if (parsedData.querySelector('parsererror')) {
     return { parsingError: parsedData.querySelector('parsererror > div').textContent };
   }
   const feed = {
-    url: status.url,
     title: parsedData.querySelector('channel > title').textContent,
     description: parsedData.querySelector('channel > description').textContent,
   };

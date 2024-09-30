@@ -114,6 +114,7 @@ export default async () => {
             watchedState.parsingError = parsingError;
             return;
           }
+          feed.url = url;
           feed.id = _.uniqueId('feed_');
           const relatedPosts = posts.map((post) => ({
             id: _.uniqueId('post_'),
