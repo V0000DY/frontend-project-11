@@ -7,6 +7,7 @@ import watch from './view.js';
 import parser from './parser.js';
 
 export default async () => {
+  const defaultLang = 'ru';
   const elements = {
     pageTitle: document.querySelector('title'),
     heading: document.querySelector('h1'),
@@ -14,8 +15,8 @@ export default async () => {
     form: document.querySelector('.rss-form'),
     input: document.getElementById('url-input'),
     label: document.querySelector('label'),
-    button: document.querySelector('.col-auto > button'),
-    example: document.querySelector('.text-muted'),
+    submit: document.querySelector('.col-auto > button'),
+    exampleRSSlink: document.querySelector('.text-muted'),
     feedback: document.querySelector('.feedback'),
     posts: document.querySelector('.posts'),
     feeds: document.querySelector('.feeds'),
@@ -25,8 +26,6 @@ export default async () => {
       viewBtn: document.querySelector('.modal-footer > a'),
     },
   };
-
-  const defaultLang = 'ru';
 
   const state = {
     feeds: [],
@@ -57,7 +56,7 @@ export default async () => {
   });
 
   const i18n = i18next.createInstance();
-  await i18n.init({
+  i18n.init({
     lng: defaultLang,
     debug: false,
     resources,
@@ -87,9 +86,6 @@ export default async () => {
   }).then(({ data }) => {
     watchedState.loadingProcess.status = 'success';
     return data;
-  }).catch((error) => {
-    watchedState.loadingProcess.status = 'fail';
-    watchedState.loadingProcess.errors = error;
   });
 
   elements.form.addEventListener('submit', (e) => {
@@ -101,6 +97,7 @@ export default async () => {
     validate(Object.fromEntries(formData), urls)
       .then((error) => {
         if (error) {
+          watchedState.form.status = 'error';
           watchedState.form.errors = error;
           return;
         }
@@ -109,6 +106,7 @@ export default async () => {
 
         loadRSS(url).then((data) => {
           if (!data) return;
+          watchedState.parsingError = '';
           const { feed, posts, parsingError } = parser(data);
           if (parsingError) {
             watchedState.parsingError = parsingError;
@@ -124,9 +122,10 @@ export default async () => {
           watchedState.posts = [...relatedPosts, ...watchedState.posts];
           watchedState.feeds = [feed, ...watchedState.feeds];
           watchedState.loadingProcess.status = 'success';
+        }).catch((loadingError) => {
+          watchedState.loadingProcess.status = 'fail';
+          watchedState.loadingProcess.errors = loadingError;
         });
-
-        watchedState.form.errors = '';
       });
   });
 
@@ -146,6 +145,8 @@ export default async () => {
         ...post,
       }));
       watchedState.posts = [...relatedPosts, ...watchedState.posts];
+    }).catch((error) => {
+      console.log(error);
     });
   };
 

@@ -8,8 +8,8 @@ const watch = (elements, i18n, state) => {
     form,
     input,
     label,
-    button,
-    example,
+    submit,
+    exampleRSSlink,
     feedback,
     posts,
     feeds,
@@ -22,8 +22,8 @@ const watch = (elements, i18n, state) => {
     lead.textContent = i18n.t('lead');
     input.placeholder = i18n.t('label');
     label.textContent = i18n.t('label');
-    button.textContent = i18n.t('button');
-    example.textContent = i18n.t('example');
+    submit.textContent = i18n.t('button');
+    exampleRSSlink.textContent = i18n.t('example');
   };
 
   const createCard = (cardName) => {
@@ -154,7 +154,8 @@ const watch = (elements, i18n, state) => {
     feedback.textContent = error;
   };
 
-  const clearErrors = () => {
+  const clearErrors = (from) => {
+    console.log(`from = ${from}, input.classList = ${input.classList}`);
     input.classList.remove('is-invalid');
     feedback.textContent = '';
   };
@@ -170,29 +171,31 @@ const watch = (elements, i18n, state) => {
         renderTexts();
         break;
       case 'parsingError':
-        clearErrors();
-        renderError(i18n.t('errors.parsingError'));
+        if (value) {
+          clearErrors('parsingError');
+          renderError(i18n.t('errors.parsingError'));
+        }
         break;
       case 'form.errors':
-        clearErrors();
+        clearErrors('form.errors');
         renderError(i18n.t(state.form.errors.key));
         break;
       case 'loadingProcess.status':
+        clearErrors('loadingProcess.status');
         if (value === 'loading') {
-          button.disabled = true;
+          submit.disabled = true;
+          input.disabled = true;
         } else {
-          button.disabled = false;
-        }
-        if (value === 'success') {
-          clearErrors();
+          input.disabled = false;
+          submit.disabled = false;
         }
         break;
       case 'loadingProcess.errors':
-        clearErrors();
+        clearErrors('loadingProcess.errors');
         renderError(i18n.t('errors.loadingError'));
         break;
       case 'feeds':
-        clearErrors();
+        clearErrors('feeds');
         renderFeeds();
         renderSuccess();
         updateInput();
