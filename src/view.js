@@ -154,8 +154,7 @@ const watch = (elements, i18n, state) => {
     feedback.textContent = error;
   };
 
-  const clearErrors = (from) => {
-    console.log(`from = ${from}, input.classList = ${input.classList}`);
+  const clearErrors = () => {
     input.classList.remove('is-invalid');
     feedback.textContent = '';
   };
@@ -172,16 +171,16 @@ const watch = (elements, i18n, state) => {
         break;
       case 'parsingError':
         if (value) {
-          clearErrors('parsingError');
+          clearErrors();
           renderError(i18n.t('errors.parsingError'));
         }
         break;
       case 'form.errors':
-        clearErrors('form.errors');
+        clearErrors();
         renderError(i18n.t(state.form.errors.key));
         break;
       case 'loadingProcess.status':
-        clearErrors('loadingProcess.status');
+        clearErrors();
         if (value === 'loading') {
           submit.disabled = true;
           input.disabled = true;
@@ -191,11 +190,11 @@ const watch = (elements, i18n, state) => {
         }
         break;
       case 'loadingProcess.errors':
-        clearErrors('loadingProcess.errors');
+        clearErrors();
         renderError(i18n.t('errors.loadingError'));
         break;
       case 'feeds':
-        clearErrors('feeds');
+        clearErrors();
         renderFeeds();
         renderSuccess();
         updateInput();
