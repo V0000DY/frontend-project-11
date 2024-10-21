@@ -101,12 +101,14 @@ const watch = (elements, i18n, state) => {
       const viewButton = document.createElement('button');
 
       li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
-      if (state.ui.viewedPosts.includes(id)) {
+
+      if (state.ui.viewedPosts.has(id)) {
         postAnchor.classList.add('fw-normal');
         postAnchor.classList.add('link-secondary');
       } else {
         postAnchor.classList.add('fw-bold');
       }
+
       viewButton.classList.add('btn', 'btn-outline-primary', 'btn-sm');
 
       postAnchor.href = link;
@@ -119,15 +121,6 @@ const watch = (elements, i18n, state) => {
 
       postAnchor.textContent = title;
       viewButton.textContent = i18n.t('viewButton');
-
-      // eslint-disable-next-line no-use-before-define
-      postAnchor.addEventListener('click', () => markViewedPost(post.id));
-      viewButton.addEventListener('click', () => {
-        // eslint-disable-next-line no-use-before-define
-        markViewedPost(post.id);
-        // eslint-disable-next-line no-use-before-define
-        markModalPost(post);
-      });
 
       li.append(postAnchor);
       li.append(viewButton);
@@ -167,37 +160,44 @@ const watch = (elements, i18n, state) => {
   const watchedState = onChange(state, (path, value) => {
     switch (path) {
       case 'form.status':
-        renderTexts();
-        break;
-      case 'parsingError':
-        if (value) {
-          clearErrors();
-          renderError(i18n.t('errors.parsingError'));
+        if (value === 'filling') {
+          renderTexts();
         }
         break;
       case 'form.errors':
         clearErrors();
-        renderError(i18n.t(state.form.errors.key));
+        if (value) {
+          renderError(i18n.t(state.form.errors.key));
+        }
         break;
       case 'loadingProcess.status':
         clearErrors();
-        if (value === 'loading') {
-          submit.disabled = true;
-          input.disabled = true;
-        } else {
-          input.disabled = false;
-          submit.disabled = false;
+        switch (value) {
+          case 'loading':
+            submit.disabled = true;
+            input.disabled = true;
+            break;
+          case 'success':
+            input.disabled = false;
+            submit.disabled = false;
+            renderFeeds();
+            renderSuccess();
+            updateInput();
+            break;
+          default:
+            input.disabled = false;
+            submit.disabled = false;
+            break;
         }
         break;
       case 'loadingProcess.errors':
         clearErrors();
-        renderError(i18n.t('errors.loadingError'));
-        break;
-      case 'feeds':
-        clearErrors();
-        renderFeeds();
-        renderSuccess();
-        updateInput();
+        if (value.isParserError) {
+          renderError(i18n.t('errors.parsingError'));
+        }
+        if (value.isAxiosError) {
+          renderError(i18n.t('errors.loadingError'));
+        }
         break;
       case 'posts':
         renderPosts();
@@ -212,14 +212,6 @@ const watch = (elements, i18n, state) => {
         break;
     }
   });
-
-  function markViewedPost(postId) {
-    watchedState.ui.viewedPosts.push(postId);
-  }
-
-  function markModalPost(post) {
-    watchedState.ui.modal = post;
-  }
 
   return watchedState;
 };

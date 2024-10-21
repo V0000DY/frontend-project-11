@@ -1,9 +1,13 @@
 export default ({ contents }) => {
   const parser = new DOMParser();
   const parsedData = parser.parseFromString(contents, 'text/xml');
+
   if (parsedData.querySelector('parsererror')) {
-    return { parsingError: parsedData.querySelector('parsererror > div').textContent };
+    const error = new Error("Link doesn't contain valid RSS");
+    error.isParserError = true;
+    throw error;
   }
+
   const feed = {
     title: parsedData.querySelector('channel > title').textContent,
     description: parsedData.querySelector('channel > description').textContent,
